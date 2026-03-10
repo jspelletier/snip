@@ -1,0 +1,26 @@
+name: Filter Request
+description: Request a new YAML filter for a CLI tool
+labels: [filter]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      placeholder: "e.g. terraform plan, cargo build, pip install"
+    validations:
+      required: true
+  - type: textarea
+    id: example-output
+    attributes:
+      label: Example raw output
+      description: Paste a typical verbose output that should be filtered.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should the filtered output look like?
+      placeholder: The essential lines you'd want to keep.
+    validations:
+      required: false
