@@ -159,7 +159,7 @@ Install the [opencode-snip](https://github.com/VincentHardouin/opencode-snip) pl
 }
 ```
 
-The plugin uses the `tool.execute.before` hook to automatically prefix supported commands with `snip`.
+The plugin uses the `tool.execute.before` hook to automatically prefix all commands with `snip`. Commands not supported by snip pass through unchanged.
 
 ### Cursor
 
