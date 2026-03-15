@@ -43,8 +43,10 @@ func ParseFlags(args []string) (Flags, []string) {
 		case isStackedVerboseFlag(arg):
 			flags.Verbose = strings.Count(arg, "v")
 		default:
-			remaining = append(remaining, args[i:]...)
-			return flags, remaining
+			// Non-flag argument: keep it for the underlying command,
+			// but continue scanning for global flags (help/version/etc.)
+			// unless we've seen a "--" separator.
+			remaining = append(remaining, arg)
 		}
 	}
 
