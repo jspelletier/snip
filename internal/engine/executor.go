@@ -25,7 +25,6 @@ var shellBuiltins = map[string]bool{
 	"source":   true,
 	"alias":    true,
 	"unalias":  true,
-	"cd":       true,
 	"eval":     true,
 	"set":      true,
 	"shopt":    true,

@@ -38,6 +38,13 @@ func Run(args []string) int {
 	command := remaining[0]
 	cmdArgs := remaining[1:]
 
+	// Commands that cannot be proxied: they must run in the parent shell
+	// to have any effect. Running them in a subprocess is a silent no-op.
+	if unproxyableReason(command) != "" {
+		fmt.Fprintf(os.Stderr, "snip: %s cannot be proxied (%s)\n", command, unproxyableReason(command))
+		return 1
+	}
+
 	// Built-in commands
 	switch command {
 	case "init":
@@ -169,6 +176,18 @@ Examples:
   snip init
 `
 	fmt.Printf(usage, version)
+}
+
+// unproxyableReason returns a human-readable reason if the command cannot be
+// proxied through an external process, or "" if it can.
+func unproxyableReason(command string) string {
+	switch command {
+	case "cd":
+		return "it must run in the parent shell to change directory"
+	case "source", ".":
+		return "it must run in the parent shell to modify the environment"
+	}
+	return ""
 }
 
 // Version returns the current version string.
