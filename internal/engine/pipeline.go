@@ -33,8 +33,9 @@ func (p *Pipeline) Run(command string, args []string) int {
 	// Match filter
 	f := p.Registry.Match(command, subcommand, filterArgs)
 
-	// No filter found: passthrough
+	// No filter found: passthrough with hint so LLMs know snip is unnecessary
 	if f == nil {
+		fmt.Fprintf(os.Stderr, "snip: no filter for %q, passing through — you can run %q directly\n", command, command)
 		return p.Passthrough(command, args)
 	}
 
