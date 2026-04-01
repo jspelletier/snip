@@ -18,6 +18,9 @@ func ParseFilter(data []byte) (*Filter, error) {
 	return &f, nil
 }
 
+// validStreams lists the allowed stream names.
+var validStreams = map[string]bool{"stdout": true, "stderr": true}
+
 // ValidateFilter checks required fields and action validity.
 func ValidateFilter(f *Filter) error {
 	if f.Name == "" {
@@ -25,6 +28,11 @@ func ValidateFilter(f *Filter) error {
 	}
 	if f.Match.Command == "" {
 		return fmt.Errorf("validate filter %q: missing 'match.command'", f.Name)
+	}
+	for _, s := range f.Streams {
+		if !validStreams[s] {
+			return fmt.Errorf("validate filter %q: unknown stream %q (valid: stdout, stderr)", f.Name, s)
+		}
 	}
 	for i, action := range f.Pipeline {
 		if action.ActionName == "" {

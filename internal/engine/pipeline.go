@@ -65,30 +65,34 @@ func (p *Pipeline) Run(command string, args []string) int {
 		return code
 	}
 
+	// Build pipeline input from selected streams
+	pipelineInput := buildPipelineInput(f, result)
+
 	// Apply filter pipeline
-	filtered, filterErr := ApplyPipeline(f, result.Stdout)
+	filtered, filterErr := ApplyPipeline(f, pipelineInput)
 	if filterErr != nil {
 		// Graceful degradation: use raw output
 		if p.Verbose > 0 {
 			fmt.Fprintf(os.Stderr, "snip: filter error: %v\n", filterErr)
 		}
-		filtered = result.Stdout
+		filtered = pipelineInput
 	}
 
 	// Tee: save raw output if needed
-	hint := tee.MaybeSave(result.Stdout, result.ExitCode, command, p.TeeConfig)
+	hint := tee.MaybeSave(pipelineInput, result.ExitCode, command, p.TeeConfig)
 
 	// Print output
 	fmt.Print(filtered)
 	if hint != "" {
 		fmt.Fprintln(os.Stderr, hint)
 	}
-	if result.Stderr != "" {
+	// Only re-emit stderr if it was not included in the filtered streams
+	if result.Stderr != "" && !f.HasStream("stderr") {
 		fmt.Fprint(os.Stderr, result.Stderr)
 	}
 
 	// Track (skip if no input — nothing meaningful to measure)
-	inputTokens := utils.EstimateTokens(result.Stdout)
+	inputTokens := utils.EstimateTokens(pipelineInput)
 	if inputTokens > 0 {
 		originalCmd := command + " " + strings.Join(fullArgs, " ")
 		snipCmd := command + " " + strings.Join(finalArgs, " ")
@@ -141,4 +145,21 @@ func ApplyPipeline(f *filter.Filter, input string) (string, error) {
 	}
 
 	return strings.Join(result.Lines, "\n") + "\n", nil
+}
+
+// buildPipelineInput assembles the text to filter based on the filter's
+// streams configuration. When both stdout and stderr are selected, stderr
+// is appended after stdout so the pipeline processes them as a single block.
+func buildPipelineInput(f *filter.Filter, result *Result) string {
+	hasStdout := f.HasStream("stdout")
+	hasStderr := f.HasStream("stderr")
+
+	switch {
+	case hasStdout && hasStderr:
+		return result.Stdout + result.Stderr
+	case hasStderr:
+		return result.Stderr
+	default:
+		return result.Stdout
+	}
 }

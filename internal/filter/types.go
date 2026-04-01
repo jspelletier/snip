@@ -1,5 +1,7 @@
 package filter
 
+import "slices"
+
 // Filter represents a declarative YAML filter for a command.
 type Filter struct {
 	Name        string   `yaml:"name"`
@@ -7,8 +9,18 @@ type Filter struct {
 	Description string   `yaml:"description"`
 	Match       Match    `yaml:"match"`
 	Inject      *Inject  `yaml:"inject,omitempty"`
+	Streams     []string `yaml:"streams,omitempty"` // "stdout", "stderr"; defaults to ["stdout"]
 	Pipeline    Pipeline `yaml:"pipeline"`
 	OnError     string   `yaml:"on_error"` // "passthrough", "empty", "template"
+}
+
+// HasStream returns true if the filter includes the given stream name.
+// When Streams is empty (default), only "stdout" is included.
+func (f *Filter) HasStream(name string) bool {
+	if len(f.Streams) == 0 {
+		return name == "stdout"
+	}
+	return slices.Contains(f.Streams, name)
 }
 
 // Match defines which command a filter applies to.

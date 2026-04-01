@@ -73,3 +73,53 @@ func TestActionResultEmpty(t *testing.T) {
 		t.Error("expected empty lines")
 	}
 }
+
+func TestHasStreamDefault(t *testing.T) {
+	f := Filter{Name: "test"}
+	if !f.HasStream("stdout") {
+		t.Error("default should include stdout")
+	}
+	if f.HasStream("stderr") {
+		t.Error("default should not include stderr")
+	}
+}
+
+func TestHasStreamExplicit(t *testing.T) {
+	f := Filter{Name: "test", Streams: []string{"stderr"}}
+	if f.HasStream("stdout") {
+		t.Error("should not include stdout")
+	}
+	if !f.HasStream("stderr") {
+		t.Error("should include stderr")
+	}
+}
+
+func TestHasStreamBoth(t *testing.T) {
+	f := Filter{Name: "test", Streams: []string{"stdout", "stderr"}}
+	if !f.HasStream("stdout") {
+		t.Error("should include stdout")
+	}
+	if !f.HasStream("stderr") {
+		t.Error("should include stderr")
+	}
+}
+
+func TestStreamsYAMLParsing(t *testing.T) {
+	input := `
+name: "test"
+streams: ["stdout", "stderr"]
+match:
+  command: "bun"
+pipeline: []
+`
+	var f Filter
+	if err := yaml.Unmarshal([]byte(input), &f); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(f.Streams) != 2 {
+		t.Fatalf("streams len = %d, want 2", len(f.Streams))
+	}
+	if f.Streams[0] != "stdout" || f.Streams[1] != "stderr" {
+		t.Errorf("streams = %v", f.Streams)
+	}
+}

@@ -28,6 +28,10 @@ inject:                          # Optional. Modify command args before executio
     "-n": "10"
   skip_if_present: ["--json"]   # Don't inject anything if any of these flags are present.
 
+streams: ["stdout", "stderr"]    # Optional. Which streams to filter. Default: ["stdout"].
+                                 # Use ["stderr"] for tools that output to stderr (e.g., bun test).
+                                 # Use ["stdout", "stderr"] to filter both streams merged together.
+
 pipeline:                        # Required. Ordered list of transformation actions.
   - action: "keep_lines"
     pattern: "\\S"

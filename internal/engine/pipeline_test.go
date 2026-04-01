@@ -90,3 +90,30 @@ func TestApplyPipelineGracefulDegradation(t *testing.T) {
 		t.Fatal("expected error for missing pattern")
 	}
 }
+
+func TestBuildPipelineInputDefault(t *testing.T) {
+	f := &filter.Filter{Name: "test"}
+	r := &Result{Stdout: "out\n", Stderr: "err\n"}
+	got := buildPipelineInput(f, r)
+	if got != "out\n" {
+		t.Errorf("default streams: got %q, want %q", got, "out\n")
+	}
+}
+
+func TestBuildPipelineInputStderrOnly(t *testing.T) {
+	f := &filter.Filter{Name: "test", Streams: []string{"stderr"}}
+	r := &Result{Stdout: "out\n", Stderr: "err\n"}
+	got := buildPipelineInput(f, r)
+	if got != "err\n" {
+		t.Errorf("stderr only: got %q, want %q", got, "err\n")
+	}
+}
+
+func TestBuildPipelineInputBoth(t *testing.T) {
+	f := &filter.Filter{Name: "test", Streams: []string{"stdout", "stderr"}}
+	r := &Result{Stdout: "out\n", Stderr: "err\n"}
+	got := buildPipelineInput(f, r)
+	if got != "out\nerr\n" {
+		t.Errorf("both streams: got %q, want %q", got, "out\nerr\n")
+	}
+}

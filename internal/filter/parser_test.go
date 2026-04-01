@@ -71,3 +71,55 @@ func TestParseFilterInvalidYAML(t *testing.T) {
 		t.Fatal("expected error for invalid YAML")
 	}
 }
+
+func TestParseFilterValidStreams(t *testing.T) {
+	yaml := `
+name: "test"
+match:
+  command: "bun"
+  subcommand: "test"
+streams: ["stdout", "stderr"]
+pipeline:
+  - action: "strip_ansi"
+`
+	f, err := ParseFilter([]byte(yaml))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(f.Streams) != 2 {
+		t.Errorf("streams len = %d, want 2", len(f.Streams))
+	}
+}
+
+func TestParseFilterInvalidStream(t *testing.T) {
+	yaml := `
+name: "test"
+match:
+  command: "bun"
+streams: ["stdin"]
+pipeline: []
+`
+	_, err := ParseFilter([]byte(yaml))
+	if err == nil {
+		t.Fatal("expected error for invalid stream name")
+	}
+}
+
+func TestParseFilterStreamsOmitted(t *testing.T) {
+	yaml := `
+name: "test"
+match:
+  command: "echo"
+pipeline: []
+`
+	f, err := ParseFilter([]byte(yaml))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(f.Streams) != 0 {
+		t.Errorf("expected empty streams, got %v", f.Streams)
+	}
+	if !f.HasStream("stdout") {
+		t.Error("default should include stdout")
+	}
+}
