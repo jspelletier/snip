@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	toml "github.com/pelletier/go-toml/v2"
 )
@@ -79,7 +80,27 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	cfg.expandTilde()
+
 	return cfg, nil
+}
+
+// expandTilde replaces a leading "~/" with the user's home directory
+// in all path fields. Go does not expand tildes from config files.
+func (c *Config) expandTilde() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	c.Tracking.DBPath = expandPath(c.Tracking.DBPath, home)
+	c.Filters.Dir = expandPath(c.Filters.Dir, home)
+}
+
+func expandPath(p, home string) string {
+	if strings.HasPrefix(p, "~/") {
+		return filepath.Join(home, p[2:])
+	}
+	return p
 }
 
 func configPath() string {

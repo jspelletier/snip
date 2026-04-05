@@ -105,6 +105,74 @@ func TestLoadConfigEmptyEnable(t *testing.T) {
 	}
 }
 
+func TestExpandTildeInPaths(t *testing.T) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Skip("cannot get home dir")
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+
+	content := `
+[tracking]
+db_path = "~/.local/share/snip/tracking.db"
+
+[filters]
+dir = "~/.config/snip/filters"
+`
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SNIP_CONFIG", path)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedDB := filepath.Join(home, ".local/share/snip/tracking.db")
+	if cfg.Tracking.DBPath != expectedDB {
+		t.Errorf("db_path: got %q, want %q", cfg.Tracking.DBPath, expectedDB)
+	}
+
+	expectedDir := filepath.Join(home, ".config/snip/filters")
+	if cfg.Filters.Dir != expectedDir {
+		t.Errorf("filters.dir: got %q, want %q", cfg.Filters.Dir, expectedDir)
+	}
+}
+
+func TestExpandTildeNoTilde(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+
+	content := `
+[tracking]
+db_path = "/absolute/path/tracking.db"
+
+[filters]
+dir = "/absolute/path/filters"
+`
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SNIP_CONFIG", path)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.Tracking.DBPath != "/absolute/path/tracking.db" {
+		t.Errorf("db_path: got %q, want absolute path", cfg.Tracking.DBPath)
+	}
+	if cfg.Filters.Dir != "/absolute/path/filters" {
+		t.Errorf("filters.dir: got %q, want absolute path", cfg.Filters.Dir)
+	}
+}
+
 func TestLoadFromFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.toml")
