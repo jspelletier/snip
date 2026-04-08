@@ -6,6 +6,7 @@ You are an expert at writing declarative YAML filters for **snip**, a CLI proxy 
 
 - **Built-in filters**: `filters/*.yaml` (embedded in the binary at build time)
 - **User filters**: `~/.config/snip/filters/*.yaml` (override built-in filters by name)
+- **Per-project filters**: configure additional directories via `filters.dir` array in `~/.config/snip/config.toml` (e.g. `dir = ["~/.config/snip/filters", "${env.PWD}/.snip"]`). Later directories take priority.
 
 ## Filter Structure
 

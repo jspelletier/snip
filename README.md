@@ -301,7 +301,7 @@ snip init                                    # creates ~/.config/snip/filters/
 vim ~/.config/snip/filters/my-tool.yaml      # add your filter
 ```
 
-User filters take priority over built-in ones.
+User filters take priority over built-in ones. Later directories in the list override earlier ones.
 
 ## Configuration
 
@@ -328,6 +328,34 @@ mode = "failures"    # "failures" | "always" | "never"
 max_files = 20
 max_file_size = 1048576
 ```
+
+### Multiple Filter Directories
+
+`filters.dir` accepts a single string or an array of directories. This enables per-project filter rules alongside global ones:
+
+```toml
+[filters]
+dir = [
+    "~/.config/snip/filters",
+    "${env.PWD}/.snip",
+]
+```
+
+Later directories take priority: a filter in `.snip/` overrides one with the same name in `~/.config/snip/filters/`.
+
+### Environment Variable Expansion
+
+All path values support `${env.VAR}` syntax to reference environment variables:
+
+```toml
+[filters]
+dir = "${env.HOME}/.config/snip/filters"
+
+[tracking]
+db_path = "${env.XDG_DATA_HOME}/snip/tracking.db"
+```
+
+Tilde expansion (`~/`) is also supported and applied after env var expansion.
 
 ## Design
 

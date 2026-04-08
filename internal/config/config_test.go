@@ -138,8 +138,9 @@ dir = "~/.config/snip/filters"
 	}
 
 	expectedDir := filepath.Join(home, ".config/snip/filters")
-	if cfg.Filters.Dir != expectedDir {
-		t.Errorf("filters.dir: got %q, want %q", cfg.Filters.Dir, expectedDir)
+	dirs := cfg.Filters.Dirs()
+	if len(dirs) != 1 || dirs[0] != expectedDir {
+		t.Errorf("filters.dir: got %v, want [%q]", dirs, expectedDir)
 	}
 }
 
@@ -168,8 +169,102 @@ dir = "/absolute/path/filters"
 	if cfg.Tracking.DBPath != "/absolute/path/tracking.db" {
 		t.Errorf("db_path: got %q, want absolute path", cfg.Tracking.DBPath)
 	}
-	if cfg.Filters.Dir != "/absolute/path/filters" {
-		t.Errorf("filters.dir: got %q, want absolute path", cfg.Filters.Dir)
+	dirs := cfg.Filters.Dirs()
+	if len(dirs) != 1 || dirs[0] != "/absolute/path/filters" {
+		t.Errorf("filters.dir: got %v, want [\"/absolute/path/filters\"]", dirs)
+	}
+}
+
+func TestLoadConfigMultipleDirs(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+
+	content := `
+[filters]
+dir = ["~/.config/snip/filters", "/project/.snip"]
+`
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SNIP_CONFIG", path)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	home, _ := os.UserHomeDir()
+	dirs := cfg.Filters.Dirs()
+	if len(dirs) != 2 {
+		t.Fatalf("expected 2 dirs, got %d: %v", len(dirs), dirs)
+	}
+	if dirs[0] != filepath.Join(home, ".config/snip/filters") {
+		t.Errorf("dirs[0]: got %q, want tilde-expanded path", dirs[0])
+	}
+	if dirs[1] != "/project/.snip" {
+		t.Errorf("dirs[1]: got %q, want %q", dirs[1], "/project/.snip")
+	}
+}
+
+func TestLoadConfigEnvVarExpansion(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+
+	t.Setenv("SNIP_TEST_PROJECT", "/my/project")
+
+	content := `
+[filters]
+dir = ["~/.config/snip/filters", "${env.SNIP_TEST_PROJECT}/.snip"]
+`
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SNIP_CONFIG", path)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	dirs := cfg.Filters.Dirs()
+	if len(dirs) != 2 {
+		t.Fatalf("expected 2 dirs, got %d: %v", len(dirs), dirs)
+	}
+	if dirs[1] != "/my/project/.snip" {
+		t.Errorf("dirs[1]: got %q, want %q", dirs[1], "/my/project/.snip")
+	}
+}
+
+func TestExpandEnvVarsUnset(t *testing.T) {
+	t.Setenv("SNIP_TEST_UNSET_CHECK", "")
+	os.Unsetenv("SNIP_TEST_UNSET_CHECK")
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+
+	content := `
+[filters]
+dir = "${env.SNIP_TEST_UNSET_CHECK}/.snip"
+`
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SNIP_CONFIG", path)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	dirs := cfg.Filters.Dirs()
+	if len(dirs) != 1 {
+		t.Fatalf("expected 1 dir, got %d", len(dirs))
+	}
+	if dirs[0] != "/.snip" {
+		t.Errorf("got %q, want %q", dirs[0], "/.snip")
 	}
 }
 

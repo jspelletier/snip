@@ -84,7 +84,7 @@ func Run(args []string) int {
 			return 1
 		}
 		fmt.Printf("tracking.db_path: %s\n", cfg.Tracking.DBPath)
-		fmt.Printf("filters.dir: %s\n", cfg.Filters.Dir)
+		fmt.Printf("filters.dir: %s\n", strings.Join(cfg.Filters.Dirs(), ", "))
 		fmt.Printf("tee.mode: %s\n", cfg.Tee.Mode)
 		fmt.Printf("tee.max_files: %d\n", cfg.Tee.MaxFiles)
 		fmt.Printf("display.color: %v\n", cfg.Display.Color)
@@ -127,7 +127,7 @@ func runPipeline(command string, args []string, flags Flags) int {
 		cfg = config.DefaultConfig()
 	}
 
-	filters, err := filter.LoadAll(cfg.Filters.Dir)
+	filters, err := filter.LoadAll(cfg.Filters.Dirs())
 	if err != nil {
 		display.PrintError(fmt.Sprintf("load filters: %v", err))
 		return 1

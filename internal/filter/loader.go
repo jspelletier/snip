@@ -80,28 +80,37 @@ func LoadUserFilters(dir string) ([]Filter, error) {
 	return filters, nil
 }
 
-// LoadAll loads user filters (priority) and embedded filters, merging by name.
-func LoadAll(userDir string) ([]Filter, error) {
-	user, err := LoadUserFilters(userDir)
-	if err != nil {
-		return nil, err
-	}
-
+// LoadAll loads filters from multiple user directories and embedded filters,
+// merging by name. Later directories override earlier ones; all user filters
+// override embedded filters.
+func LoadAll(userDirs []string) ([]Filter, error) {
 	embedded, err := LoadEmbedded()
 	if err != nil {
 		return nil, err
 	}
 
-	byName := make(map[string]bool)
+	byName := make(map[string]int) // name -> index in result
 	var result []Filter
-	for _, f := range user {
-		byName[f.Name] = true
+
+	for _, f := range embedded {
+		byName[f.Name] = len(result)
 		result = append(result, f)
 	}
-	for _, f := range embedded {
-		if !byName[f.Name] {
-			result = append(result, f)
+
+	for _, dir := range userDirs {
+		user, err := LoadUserFilters(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range user {
+			if idx, exists := byName[f.Name]; exists {
+				result[idx] = f
+			} else {
+				byName[f.Name] = len(result)
+				result = append(result, f)
+			}
 		}
 	}
+
 	return result, nil
 }

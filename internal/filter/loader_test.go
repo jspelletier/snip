@@ -80,7 +80,7 @@ on_error: "passthrough"
 		t.Fatal(err)
 	}
 
-	filters, err := LoadAll(dir)
+	filters, err := LoadAll([]string{dir})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -95,4 +95,89 @@ on_error: "passthrough"
 	if !found {
 		t.Error("user filter not found in merged results")
 	}
+}
+
+func TestLoadAllMultipleDirs(t *testing.T) {
+	dir1 := t.TempDir()
+	dir2 := t.TempDir()
+
+	yaml1 := `
+name: "filter-a"
+version: 1
+match:
+  command: "a"
+pipeline:
+  - action: "head"
+    n: 5
+on_error: "passthrough"
+`
+	yaml2 := `
+name: "filter-a"
+version: 1
+match:
+  command: "a-override"
+pipeline:
+  - action: "tail"
+    n: 3
+on_error: "passthrough"
+`
+	yaml3 := `
+name: "filter-b"
+version: 1
+match:
+  command: "b"
+pipeline:
+  - action: "head"
+    n: 10
+on_error: "passthrough"
+`
+	if err := os.WriteFile(filepath.Join(dir1, "a.yaml"), []byte(yaml1), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir2, "a.yaml"), []byte(yaml2), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir2, "b.yaml"), []byte(yaml3), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	filters, err := LoadAll([]string{dir1, dir2})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// filter-a should be overridden by dir2 (command "a-override")
+	// filter-b should be from dir2
+	var filterA, filterB *Filter
+	for i := range filters {
+		switch filters[i].Name {
+		case "filter-a":
+			filterA = &filters[i]
+		case "filter-b":
+			filterB = &filters[i]
+		}
+	}
+
+	if filterA == nil {
+		t.Fatal("filter-a not found")
+	}
+	if filterA.Match.Command != "a-override" {
+		t.Errorf("filter-a should be overridden by dir2, got command=%q", filterA.Match.Command)
+	}
+
+	if filterB == nil {
+		t.Fatal("filter-b not found")
+	}
+	if filterB.Match.Command != "b" {
+		t.Errorf("filter-b command: got %q, want %q", filterB.Match.Command, "b")
+	}
+}
+
+func TestLoadAllEmptyDirs(t *testing.T) {
+	filters, err := LoadAll(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Should not error even with no directories (EmbeddedFS is nil in tests)
+	_ = filters
 }
