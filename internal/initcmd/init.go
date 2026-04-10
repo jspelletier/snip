@@ -22,6 +22,10 @@ fi
 
 set -euo pipefail
 
+# If anything fails, fall back to allowing the original command unchanged.
+# This prevents Claude Code from seeing "PreToolUse:Bash hook error".
+trap 'exit 0' ERR
+
 leading_ws_len() {
   local input="$1"
   local len=${#input}
