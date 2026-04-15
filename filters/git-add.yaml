@@ -16,3 +16,9 @@ pipeline:
     message: "ok"
 
 on_error: "passthrough"
+
+tests:
+  - name: "empty input returns ok"
+    input: ""
+    expected: |
+      ok

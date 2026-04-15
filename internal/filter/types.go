@@ -4,14 +4,22 @@ import "slices"
 
 // Filter represents a declarative YAML filter for a command.
 type Filter struct {
-	Name        string   `yaml:"name"`
-	Version     int      `yaml:"version"`
-	Description string   `yaml:"description"`
-	Match       Match    `yaml:"match"`
-	Inject      *Inject  `yaml:"inject,omitempty"`
-	Streams     []string `yaml:"streams,omitempty"` // "stdout", "stderr"; defaults to ["stdout"]
-	Pipeline    Pipeline `yaml:"pipeline"`
-	OnError     string   `yaml:"on_error"` // "passthrough", "empty", "template"
+	Name        string       `yaml:"name"`
+	Version     int          `yaml:"version"`
+	Description string       `yaml:"description"`
+	Match       Match        `yaml:"match"`
+	Inject      *Inject      `yaml:"inject,omitempty"`
+	Streams     []string     `yaml:"streams,omitempty"` // "stdout", "stderr"; defaults to ["stdout"]
+	Pipeline    Pipeline     `yaml:"pipeline"`
+	OnError     string       `yaml:"on_error"` // "passthrough", "empty", "template"
+	Tests       []FilterTest `yaml:"tests,omitempty"`
+}
+
+// FilterTest defines an inline test case for a filter.
+type FilterTest struct {
+	Name     string `yaml:"name"`
+	Input    string `yaml:"input"`
+	Expected string `yaml:"expected"`
 }
 
 // HasStream returns true if the filter includes the given stream name.

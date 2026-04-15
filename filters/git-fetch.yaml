@@ -21,3 +21,9 @@ pipeline:
     overflow_msg: "... more refs"
 
 on_error: "passthrough"
+
+tests:
+  - name: "empty input returns ok (no new changes)"
+    input: ""
+    expected: |
+      ok (no new changes)

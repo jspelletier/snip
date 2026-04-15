@@ -11,7 +11,7 @@
 
 AI coding agents burn tokens on verbose shell output that adds zero signal. A passing `go test` produces hundreds of lines the LLM will never use. `git log` dumps full commit metadata when a one-liner per commit suffices.
 
-snip sits between your AI tool and the shell, filtering output through **declarative YAML pipelines** -- no compiled filters, no code changes. Write a YAML file, drop it in a folder, done. An extensible [rtk](https://github.com/rtk-ai/rtk) alternative built in Go.
+snip sits between your AI tool and the shell, filtering output through **declarative YAML pipelines**. Write a YAML file, drop it in a folder, done. The extensible LLM token optimizer: filters are YAML data files, not compiled code.
 
 ```
   snip — Token Savings Report
@@ -41,7 +41,10 @@ snip sits between your AI tool and the shell, filtering output through **declara
 ## Quick Start
 
 ```bash
-# Homebrew (macOS/Linux)
+# Quick install (macOS/Linux)
+curl -fsSL https://raw.githubusercontent.com/edouard-claude/snip/master/install.sh | sh
+
+# Or via Homebrew
 brew install edouard-claude/tap/snip
 
 # Or with Go
@@ -403,22 +406,22 @@ Tilde expansion (`~/`) is also supported and applied after env var expansion.
 - **Zero CGO** — pure Go SQLite driver, static binaries, trivial cross-compilation
 - **Goroutine concurrency** — stdout/stderr captured in parallel without thread pools
 
-## snip vs rtk (Rust Token Killer)
+## Design Philosophy
 
-Looking for an rtk alternative? snip takes a fundamentally different approach to LLM token reduction: **filters are data, not code**.
+snip chose a fundamentally different approach to LLM token reduction: **filters are data, not code**. The binary is the engine, filters are YAML data files, and the two evolve independently.
 
 | | **[rtk](https://github.com/rtk-ai/rtk)** (Rust) | **snip** (Go) |
 |---|---|---|
 | Filter authoring | Write Rust, recompile, wait for release | Write YAML, drop in a folder, done |
-| Filter format | Compiled into the binary | Declarative YAML -- engine and filters evolve independently |
+| Filter format | Compiled into the binary | Declarative YAML, engine and filters evolve independently |
 | Custom filters | Fork the repo, add Rust code | Create a `.yaml` file in `~/.config/snip/filters/` |
 | Concurrency | 2 OS threads | Goroutines (lightweight, no thread pool) |
-| SQLite | Requires CGO + C compiler | Pure Go driver -- static binary, no dependencies |
+| SQLite | Requires CGO + C compiler | Pure Go driver, static binary, no dependencies |
 | Cross-compilation | Per-target C toolchain | `GOOS=linux GOARCH=arm64 go build` |
 | Pipeline actions | Built-in strategies | 19 composable actions (keep, remove, regex, JSON, state machine...) |
 | Contributing | Rust knowledge required | YAML knowledge sufficient |
 
-Both tools solve the same problem -- reducing AI token costs from verbose CLI output. snip's bet is that **extensibility wins**: when anyone can write a filter in 5 minutes without touching Go or Rust, the filter ecosystem grows faster.
+Both tools solve the same problem: reducing AI token costs from verbose CLI output. snip's bet is that **extensibility wins**. When anyone can write a filter in 5 minutes without touching Go or Rust, the filter ecosystem grows faster.
 
 ## Development
 

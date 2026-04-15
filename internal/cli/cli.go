@@ -17,6 +17,7 @@ import (
 	"github.com/edouard-claude/snip/internal/initcmd"
 	"github.com/edouard-claude/snip/internal/tee"
 	"github.com/edouard-claude/snip/internal/tracking"
+	"github.com/edouard-claude/snip/internal/verify"
 )
 
 // version is set at build time via -ldflags "-X ...". Do not reassign.
@@ -117,6 +118,9 @@ func Run(args []string) int {
 			return 1
 		}
 		return 0
+
+	case "verify":
+		return verify.Run(cmdArgs)
 
 	case "proxy":
 		// Direct passthrough without filtering
@@ -220,6 +224,7 @@ Commands:
   hook         Handle agent PreToolUse/shell hook
   gain         Show token savings report
   discover     Scan sessions for missed filter opportunities
+  verify       Run inline filter tests (--require-all to enforce coverage)
   config       Show current configuration
   proxy        Passthrough without filtering
 
