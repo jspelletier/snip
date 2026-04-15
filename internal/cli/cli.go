@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/edouard-claude/snip/internal/config"
+	"github.com/edouard-claude/snip/internal/discover"
 	"github.com/edouard-claude/snip/internal/display"
 	"github.com/edouard-claude/snip/internal/engine"
 	"github.com/edouard-claude/snip/internal/filter"
@@ -110,6 +111,13 @@ func Run(args []string) int {
 		}
 		return 0
 
+	case "discover":
+		if err := discover.Run(cmdArgs); err != nil {
+			display.PrintError(err.Error())
+			return 1
+		}
+		return 0
+
 	case "proxy":
 		// Direct passthrough without filtering
 		if len(cmdArgs) == 0 {
@@ -208,11 +216,16 @@ Usage: snip [flags] <command> [args...]
 
 Commands:
   <command>    Run command through snip filter pipeline
-  init         Install Claude Code hook
-  hook         Handle Claude Code PreToolUse hook
+  init         Install agent integration (default: claude-code)
+  hook         Handle agent PreToolUse/shell hook
   gain         Show token savings report
+  discover     Scan sessions for missed filter opportunities
   config       Show current configuration
   proxy        Passthrough without filtering
+
+Init flags:
+  --agent <name>  Agent to configure (claude-code, cursor, codex, windsurf, cline)
+  --uninstall     Remove snip integration for the agent
 
 Flags:
   -v, -vv      Verbose output (stackable)
@@ -231,6 +244,8 @@ Examples:
   snip gain --history 20
   snip gain --no-truncate
   snip init
+  snip init --agent cursor
+  snip init --agent codex
 `
 	fmt.Printf(usage, version)
 }
