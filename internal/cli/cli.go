@@ -15,6 +15,7 @@ import (
 	"github.com/edouard-claude/snip/internal/engine"
 	"github.com/edouard-claude/snip/internal/filter"
 	"github.com/edouard-claude/snip/internal/hook"
+	"github.com/edouard-claude/snip/internal/hookaudit"
 	"github.com/edouard-claude/snip/internal/initcmd"
 	"github.com/edouard-claude/snip/internal/learn"
 	"github.com/edouard-claude/snip/internal/tee"
@@ -58,6 +59,13 @@ func Run(args []string) int {
 	switch command {
 	case "hook":
 		return runHook()
+
+	case "hook-audit":
+		if err := hookaudit.Run(cmdArgs); err != nil {
+			display.PrintError(err.Error())
+			return 1
+		}
+		return 0
 
 	case "init":
 		if err := initcmd.Run(cmdArgs); err != nil {
@@ -260,6 +268,7 @@ Commands:
   <command>    Run command through snip filter pipeline
   init         Install agent integration (default: claude-code)
   hook         Handle agent PreToolUse/shell hook
+  hook-audit   Show recent hook activity (set SNIP_HOOK_AUDIT=1 to log)
   gain         Show token savings report
   cc-economics Show financial impact of token savings by API tier
   discover     Scan sessions for missed filter opportunities

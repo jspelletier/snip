@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
+
+	"github.com/edouard-claude/snip/internal/hookaudit"
 )
 
 // hookInput represents the JSON payload from Claude Code PreToolUse.
@@ -28,6 +31,8 @@ type toolInput struct {
 // Returns nil on success. Errors are returned but the caller should always
 // exit 0 (graceful degradation).
 func Run(r io.Reader, w io.Writer, commands []string, snipBin string) error {
+	audit := hookaudit.Enabled()
+
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("read stdin: %w", err)
@@ -72,6 +77,16 @@ func Run(r io.Reader, w io.Writer, commands []string, snipBin string) error {
 		cmdSet[c] = struct{}{}
 	}
 	if _, ok := cmdSet[base]; !ok {
+		// Audit: command not matched.
+		if audit {
+			hookaudit.Append(hookaudit.Event{
+				Timestamp: time.Now().UTC(),
+				Command:   ti.Command,
+				Base:      base,
+				Matched:   false,
+				Rewritten: false,
+			})
+		}
 		return nil
 	}
 
@@ -93,6 +108,17 @@ func Run(r io.Reader, w io.Writer, commands []string, snipBin string) error {
 			"permissionDecisionReason": "snip auto-rewrite",
 			"updatedInput":             originalInput,
 		},
+	}
+
+	// Audit: command matched and rewritten.
+	if audit {
+		hookaudit.Append(hookaudit.Event{
+			Timestamp: time.Now().UTC(),
+			Command:   ti.Command,
+			Base:      base,
+			Matched:   true,
+			Rewritten: true,
+		})
 	}
 
 	enc := json.NewEncoder(w)
