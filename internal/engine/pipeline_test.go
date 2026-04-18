@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -156,6 +157,15 @@ func TestBuildPipelineInputBoth(t *testing.T) {
 }
 
 func TestPipelineRunSilentWhenFilterExcludedByFlags(t *testing.T) {
+	// p.Run("true", ...) executes the real "true" binary, which doesn't exist on Windows.
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping: no 'true' command on Windows")
+	}
+
+	// Test mechanism: the filter requires --json, but Run() is called with no flags.
+	// Therefore Match() returns nil (flag mismatch), yet HasAnyFilter() still returns
+	// true (a filter *exists* for "true"). The expected behavior is silence on stderr;
+	// before the fix in #36, a misleading "no filter for true" message was printed.
 	f := filter.Filter{
 		Name:    "true-json",
 		Version: 1,
@@ -168,10 +178,11 @@ func TestPipelineRunSilentWhenFilterExcludedByFlags(t *testing.T) {
 	reg := filter.NewRegistry([]filter.Filter{f})
 	p := &Pipeline{
 		Registry:      reg,
-		QuietNoFilter: false, // messages enabled — bug would print here
+		QuietNoFilter: false, // messages enabled - bug would print here
 	}
 
-	// Capture stderr
+	// Capture stderr by swapping os.Stderr with a pipe.
+	// NOTE: this is not safe under t.Parallel() since os.Stderr is global.
 	oldStderr := os.Stderr
 	r, w, err := os.Pipe()
 	if err != nil {
@@ -186,7 +197,7 @@ func TestPipelineRunSilentWhenFilterExcludedByFlags(t *testing.T) {
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, r)
 
-	if strings.Contains(buf.String(), "no filter") {
+	if strings.Contains(buf.String(), "no filter for") {
 		t.Errorf("expected silent stderr when filter exists but excluded by flags, got: %q", buf.String())
 	}
 }
