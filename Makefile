@@ -1,4 +1,4 @@
-.PHONY: build build-lite test test-race lint install install-lite clean
+.PHONY: build build-lite build-windows test test-race lint install install-lite clean
 
 BINARY=snip
 BUILD_DIR=cmd/snip
@@ -10,6 +10,9 @@ build:
 
 build-lite:
 	CGO_ENABLED=0 go build -tags lite -o $(BINARY) $(LDFLAGS) ./$(BUILD_DIR)
+
+build-windows:
+	GOOS=windows CGO_ENABLED=0 go build -o $(BINARY).exe $(LDFLAGS) ./$(BUILD_DIR)
 
 test:
 	go test -cover ./...
@@ -28,5 +31,5 @@ install-lite: build-lite
 	cp $(BINARY) $(GOPATH)/bin/$(BINARY) 2>/dev/null || cp $(BINARY) /usr/local/bin/$(BINARY)
 
 clean:
-	rm -f $(BINARY)
+	rm -f $(BINARY) $(BINARY).exe
 	go clean -testcache
