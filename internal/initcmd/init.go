@@ -17,7 +17,7 @@ const (
 
 // validAgents lists all supported agent names.
 var validAgents = []string{
-	"claude-code", "cursor", "codex", "windsurf", "cline",
+	"claude-code", "cursor", "codex", "pi", "windsurf", "cline",
 	"copilot", "gemini", "kilocode", "antigravity",
 }
 
@@ -131,6 +131,8 @@ func Run(args []string) error {
 			return initPromptAgent(agent, snipBin, filterDir)
 		}
 		return initCodex(snipBin, home, filterDir)
+	case "pi":
+		return initPi(snipBin, home, filterDir)
 	case "windsurf", "cline", "copilot", "gemini", "kilocode", "antigravity":
 		return initPromptAgent(agent, snipBin, filterDir)
 	}
@@ -255,6 +257,8 @@ func Uninstall(agent string) error {
 		return uninstallCursor()
 	case "codex":
 		return uninstallCodex()
+	case "pi":
+		return uninstallPi()
 	case "windsurf", "cline", "copilot", "gemini", "kilocode", "antigravity":
 		return uninstallPromptAgent(agent)
 	}

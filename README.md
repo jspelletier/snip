@@ -148,6 +148,7 @@ snip integrates with every major AI coding assistant. One binary, universal comp
 | **GitHub Copilot** | `snip init --agent copilot` | .github/copilot-instructions.md |
 | **Gemini CLI** | `snip init --agent gemini` | GEMINI.md prompt injection |
 | **Codex (OpenAI)** | `snip init --agent codex` | AGENTS.md prompt injection |
+| **Pi (pi.dev)** | `snip init --agent pi` | PreToolUse hook (via [pi-hooks](https://github.com/hsingjui/pi-hooks)) |
 | **Windsurf** | `snip init --agent windsurf` | .windsurfrules prompt injection |
 | **Cline / Roo Code** | `snip init --agent cline` | .clinerules prompt injection |
 | **Kilo Code** | `snip init --agent kilocode` | .kilocode/rules/ prompt injection |
@@ -180,6 +181,24 @@ This patches `~/.cursor/hooks.json` with a `beforeShellExecution` hook. Works th
 
 ```bash
 snip init --agent cursor --uninstall   # remove the hook
+```
+
+### Pi (pi.dev)
+
+```bash
+snip init --agent pi
+```
+
+This patches `~/.pi/agent/settings.json` with a `PreToolUse` entry matching the `bash` tool. The runtime hook is interpreted by the community extension [`@hsingjui/pi-hooks`](https://github.com/hsingjui/pi-hooks), which mirrors Claude Code's `hookSpecificOutput` format (including command rewriting via `updatedInput`). Install it once:
+
+```bash
+pi install npm:@hsingjui/pi-hooks
+```
+
+Then run `/reload` (or restart Pi). Once active, snip rewrites supported commands transparently.
+
+```bash
+snip init --agent pi --uninstall   # remove the hook
 ```
 
 ### Copilot / Gemini / Codex / Windsurf / Cline / Kilo Code / Antigravity
@@ -259,6 +278,7 @@ snip proxy <command>        # force passthrough (no filtering)
 snip config                 # show config
 snip init                       # install Claude Code hook
 snip init --agent cursor        # install Cursor hook
+snip init --agent pi            # install Pi (pi.dev) hook
 snip init --agent copilot       # install Copilot integration
 snip init --agent gemini        # install Gemini CLI integration
 snip init --agent kilocode      # install Kilo Code integration

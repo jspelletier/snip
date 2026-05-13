@@ -61,6 +61,9 @@ func Run(args []string) int {
 		if len(cmdArgs) > 0 && cmdArgs[0] == "codex" {
 			return runHookCodex()
 		}
+		if len(cmdArgs) > 0 && cmdArgs[0] == "pi" {
+			return runHookPi()
+		}
 		return runHook()
 
 	case "hook-audit":
@@ -253,6 +256,19 @@ func runHookCodex() int {
 	return 0
 }
 
+// runHookPi handles "snip hook pi" — Pi's PreToolUse hook entry. Pi's
+// runtime hook system is provided by the @hsingjui/pi-hooks extension,
+// which mirrors Claude Code's hookSpecificOutput format. Always returns 0
+// (graceful degradation).
+func runHookPi() int {
+	snipBin, commands, ok := loadHookContext()
+	if !ok {
+		return 0
+	}
+	_ = hook.RunPi(os.Stdin, os.Stdout, commands, snipBin)
+	return 0
+}
+
 // loadHookContext resolves the snip binary path and loads the filter
 // registry. Returns ok=false on any failure so callers can exit 0 silently.
 func loadHookContext() (snipBin string, commands []string, ok bool) {
@@ -407,7 +423,7 @@ Commands:
 
 Init flags:
   --agent <name>  Agent to configure:
-                  claude-code (default), cursor, codex, windsurf, cline,
+                  claude-code (default), cursor, codex, pi, windsurf, cline,
                   copilot, gemini, kilocode, antigravity
   --uninstall     Remove snip integration for the agent
 
